@@ -47,6 +47,7 @@ const initialQuoteData: QuoteData = {
 };
 
 function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [view, setView] = useState<AppView>(AppView.DASHBOARD);
   const [projects, setProjects] = useState<QuoteData[]>([]);
   const [currentProject, setCurrentProject] = useState<QuoteData | null>(null);
@@ -143,11 +144,29 @@ function App() {
     }
   };
 
+  const openSidebar = () => setIsSidebarOpen(true);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
-      <Sidebar currentView={view} onChangeView={setView} />
-      
-      <div className="flex-1 ml-64 p-8 overflow-y-auto h-screen">
+      <Sidebar currentView={view} onChangeView={setView} isOpen={isSidebarOpen} onClose={closeSidebar} />
+
+      {/* Overlay for mobile when sidebar is open */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={closeSidebar} aria-hidden />
+      )}
+
+      <div className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto h-screen">
+        {/* Mobile top bar with hamburger */}
+        <div className="md:hidden flex items-center justify-between px-2 py-3"> 
+          <button onClick={openSidebar} className="p-2 rounded-md bg-white/5 text-slate-800 hover:bg-white/10">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+          <div className="text-sm text-slate-600">OrçaMDF</div>
+          <div style={{ width: 36 }} />
+        </div>
+
+        {/* Top Bar / Breadcrumb area could go here */}
         {/* Top Bar / Breadcrumb area could go here */}
         
         <div className="max-w-6xl mx-auto">

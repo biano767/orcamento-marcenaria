@@ -5,9 +5,41 @@ import { AppView } from '../types';
 interface SidebarProps {
   currentView: AppView;
   onChangeView: (view: AppView) => void;
+  isOpen?: boolean; // mobile drawer state
+  onClose?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen = false, onClose }) => {
+  // Desktop: always visible (w-64). Mobile: act as drawer using transform.
+  const baseClasses = 'bg-slate-900 h-screen flex flex-col flex-shrink-0 text-white fixed left-0 top-0 z-50';
+  const desktopVisible = 'w-64 hidden md:flex';
+  const mobileVisible = `w-64 md:hidden transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`;
+
+  return (
+    <>
+      <div className={`${baseClasses} ${desktopVisible}`} aria-hidden={!isOpen}>
+        {/* Desktop sidebar (md and up) */}
+        <SidebarContent currentView={currentView} onChangeView={onChangeView} />
+      </div>
+
+      {/* Mobile drawer */}
+      <div className={`${baseClasses} ${mobileVisible}`} role="dialog" aria-modal={isOpen}>
+        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Ruler className="text-orange-500 h-8 w-8" />
+            <span className="text-lg font-bold">OrçaMDF</span>
+          </div>
+          <button onClick={onClose} className="text-gray-300 hover:text-white p-2">
+            ✕
+          </button>
+        </div>
+        <SidebarContent currentView={currentView} onChangeView={(v)=>{ onChangeView(v); onClose && onClose(); }} />
+      </div>
+    </>
+  );
+};
+
+const SidebarContent: React.FC<{ currentView: AppView; onChangeView: (view: AppView) => void }> = ({ currentView, onChangeView }) => {
   const navItemClass = (view: AppView) => 
     `flex items-center space-x-3 w-full px-4 py-3 rounded-lg transition-colors cursor-pointer ${
       currentView === view 
@@ -16,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView }) => {
     }`;
 
   return (
-    <div className="w-64 bg-slate-900 h-screen flex flex-col flex-shrink-0 text-white fixed left-0 top-0">
+    <>
       {/* Logo */}
       <div className="p-6 flex items-center space-x-2 border-b border-slate-800">
         <Ruler className="text-orange-500 h-8 w-8" />
@@ -57,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView }) => {
         <p className="font-semibold mb-1">v1.0 MVP</p>
         <p>Powered by Gemini AI</p>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -12,8 +12,6 @@ dist
 dist-ssr
 *.local
 
-# Explicitly ignore local env files containing secrets
-.env.local
 
 # Editor directories and files
 .vscode/*

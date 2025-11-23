@@ -7,7 +7,7 @@ import SettingsView from './components/Settings';
 import AdBanner from './components/AdBanner';
 import { AppView, QuoteData, QuoteResult, ModuleDefinition } from './types';
 import { saveProject, loadProjects, deleteProject, clearStorage, loadSettings } from './services/storageService';
-import { generateQuote } from './services/geminiService';
+import { generateLocalQuote } from './services/localQuoteService';
 import { generatePDF } from './services/pdfService';
 
 const createDefaultModule = (id: string, name: string): ModuleDefinition => ({
@@ -101,8 +101,8 @@ function App() {
 
     try {
       const settings = loadSettings();
-      const result = await generateQuote(data, settings);
-      
+      const result = generateLocalQuote(data, settings);
+
       const finishedProject: QuoteData = {
         ...data,
         result,
@@ -114,7 +114,7 @@ function App() {
       refreshProjects();
       setView(AppView.RESULT);
     } catch (error) {
-      alert("Erro na IA. Verifique sua chave API ou conexão.");
+      alert("Erro ao gerar orçamento localmente.");
       console.error(error);
     } finally {
       setIsLoading(false);

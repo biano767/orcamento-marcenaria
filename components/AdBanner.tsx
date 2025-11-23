@@ -23,8 +23,8 @@ const AdBanner: React.FC<AdBannerProps> = ({ position, adSlot }) => {
       <ins
         className="adsbygoogle"
         style={insStyle}
-        data-ad-client="ca-pub-REPLACE_WITH_YOUR_ID"
-        data-ad-slot={adSlot || 'REPLACE_WITH_AD_SLOT'}
+        data-ad-client="ca-pub-8819760043153934"
+        data-ad-slot={adSlot || 'ca-pub-8819760043153934'}
         data-ad-format="auto"
         data-full-width-responsive="true"
       ></ins>

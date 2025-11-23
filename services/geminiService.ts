@@ -2,9 +2,13 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { QuoteData, QuoteResult, AppSettings } from "../types";
 
 const getAiClient = () => {
-  const apiKey = process.env.API_KEY;
+  // Look up API key from multiple sources to support local `.env.local`, Vite env vars
+  const apiKey = (process && (process.env.API_KEY || process.env.GEMINI_API_KEY)) ||
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GEMINI_API_KEY) ||
+    undefined;
+
   if (!apiKey) {
-    throw new Error("API Key not found.");
+    throw new Error("API Key not found. Set API_KEY (server) or VITE_GEMINI_API_KEY (local) in your environment.");
   }
   return new GoogleGenAI({ apiKey });
 };

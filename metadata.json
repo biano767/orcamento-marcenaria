@@ -1,0 +1,7 @@
+{
+  "name": "OrçaMDF Lite",
+  "description": "Gerador automático de orçamentos de marcenaria com IA",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

@@ -1,0 +1,108 @@
+export interface MaterialItem {
+  name: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface QuoteResult {
+  totalCost: number;
+  suggestedPrice: number;
+  productionTimeDays: number;
+  materialList: MaterialItem[];
+  laborCost: number;
+  description: string;
+  observations: string[];
+}
+
+// User configurable prices
+export interface AppSettings {
+  priceMdfWhite15: number;
+  priceMdfWhite6: number;
+  priceMdfColor15: number;
+  sheetArea: number; // m2
+  priceHinge: number;
+  priceSlide: number;
+  priceSlideHidden: number; // Corrediça oculta
+  priceRail: number; // Sistema porta de correr
+  priceHandle: number; // Puxador
+  laborRate: number;
+  profitMargin: number;
+}
+
+export interface ProjectDetails {
+  id: string;
+  projectName: string;
+  clientName: string;
+  description: string;
+  dateCreated: string;
+  status: 'Draft' | 'Done';
+  // imageBase64 removed from here
+}
+
+export interface ModuleDimensions {
+  width: number;
+  height: number;
+  depth: number;
+}
+
+export interface ModuleMaterials {
+  colorInternal: string;
+  colorExternal: string;
+  backingType: string;
+  installationType: string;
+  visibleSides: number; // 0, 1, 2, 3, 4
+}
+
+export interface ModuleInternals {
+  shelves: number;
+  drawers: number;
+  drawerSideHeight: number; 
+  drawerSlideType: 'Telescópica' | 'Oculta';
+  shoeShelves: number;
+  clothesRails: number;
+}
+
+export interface ModuleHardware {
+  doorType: 'Giro (Dobradiças)' | 'Correr (Trilhos)' | 'Sem Portas (Nicho)';
+  doorCount: number;
+  handleModel: string;
+}
+
+export type ModuleType = 'Armário Padrão' | 'Gaveteiro' | 'Prateleira/Nicho' | 'Mesa/Bancada';
+
+export interface ModuleDefinition {
+  id: string;
+  name: string;
+  type: ModuleType;
+  dimensions: ModuleDimensions;
+  materials: ModuleMaterials;
+  internals: ModuleInternals;
+  hardware: ModuleHardware;
+  imageBase64?: string; // Moved here
+}
+
+// Unified Data Structure for a Quote
+export interface QuoteData {
+  project: ProjectDetails;
+  modules: ModuleDefinition[];
+  result?: QuoteResult;
+}
+
+export interface QuoteFormData {
+  width: number;
+  height: number;
+  depth: number;
+  doors: number;
+  drawers: number;
+  description: string;
+  project?: ProjectDetails;
+}
+
+export enum AppView {
+  DASHBOARD = 'DASHBOARD',
+  WIZARD = 'WIZARD',
+  SETTINGS = 'SETTINGS',
+  RESULT = 'RESULT'
+}

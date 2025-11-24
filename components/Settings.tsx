@@ -95,6 +95,16 @@ const SettingsView: React.FC<SettingsProps> = ({ onSave }) => {
             <input type="number" name="priceHandle" value={settings.priceHandle} onChange={handleChange} className="w-full p-3 border rounded-lg bg-white focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
           </div>
 
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Fita de Borda (R$/m)</label>
+            <input type="number" name="priceEdgeBandPerMeter" value={settings.priceEdgeBandPerMeter} onChange={handleChange} className="w-full p-3 border rounded-lg bg-white focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Desperdício fita (%)</label>
+            <input type="number" name="edgeBandWastePercent" value={settings.edgeBandWastePercent} onChange={handleChange} className="w-full p-3 border rounded-lg bg-white focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+          </div>
+
           {/* Service Section */}
           <div className="col-span-full mt-4">
              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Serviço</h3>

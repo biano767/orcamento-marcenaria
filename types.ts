@@ -28,6 +28,8 @@ export interface AppSettings {
   priceRail: number; // Sistema porta de correr
   priceHandle: number; // Puxador
   laborRate: number;
+  priceEdgeBandPerMeter: number; // R$/metro da fita de borda
+  edgeBandWastePercent: number; // percentual de desperdício aplicado à fita de borda
   profitMargin: number;
 }
 

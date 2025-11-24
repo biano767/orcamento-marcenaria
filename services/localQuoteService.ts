@@ -14,6 +14,7 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
   let totalSlidesHidden = 0;
   let totalRails = 0;
   let totalHandles = 0;
+  let totalEdgeMeters = 0; // meters of edge banding
 
   let laborHours = 0;
 
@@ -49,6 +50,18 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
     totalArea15External += externalArea;
     totalArea15Internal += internalArea;
     totalArea6 += area6;
+
+    // Edge band estimates (heuristic):
+    // - Doors: perimeter of each door (2*(w+h))
+    // - Drawer fronts: perimeter of each drawer front (2*(w + drawerFrontHeight))
+    // - Shelves (front edge only): shelves * width
+    // - Visible sides: assume each visible side contributes a vertical edge equal to height
+    const doorEdge = (mod.hardware.doorCount || 0) * (2 * (w + h));
+    const drawerEdge = (mod.internals.drawers || 0) * (2 * (w + drawerFrontHeight));
+    const shelvesFrontEdge = (mod.internals.shelves || 0) * w;
+    const visibleSidesEdge = (mod.materials.visibleSides || 0) * h;
+
+    totalEdgeMeters += doorEdge + drawerEdge + shelvesFrontEdge + visibleSidesEdge;
 
     // Hardware counts
     if (mod.hardware.doorType === 'Giro (Dobradiças)') {
@@ -104,12 +117,18 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
   const costSlidesHidden = totalSlidesHidden * settings.priceSlideHidden;
   const costRails = totalRails * settings.priceRail;
   const costHandles = totalHandles * settings.priceHandle;
+  // Apply waste percentage to edge band meters
+  const wastePercent = settings.edgeBandWastePercent || 0;
+  const totalEdgeMetersWithWaste = totalEdgeMeters * (1 + (wastePercent / 100));
+  const costEdgeBand = totalEdgeMetersWithWaste * (settings.priceEdgeBandPerMeter || 0);
 
   const materialCost = costSheets15 + costSheets6 + costHinges + costSlidesTel + costSlidesHidden + costRails + costHandles;
+  // include edge band cost
+  const materialCostWithEdge = materialCost + costEdgeBand;
 
   const laborCost = laborHours * settings.laborRate;
 
-  const totalCost = materialCost + laborCost;
+  const totalCost = materialCostWithEdge + laborCost;
   const suggestedPrice = Math.round((totalCost * (1 + (settings.profitMargin / 100))) * 100) / 100;
 
   // Production time (days) estimate (8h/day)
@@ -191,6 +210,15 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
       totalPrice: costHandles,
     });
   }
+  if (totalEdgeMeters > 0) {
+    materialList.push({
+      name: 'Fita de Borda',
+      quantity: Math.round(totalEdgeMetersWithWaste * 100) / 100,
+      unit: 'm',
+      unitPrice: settings.priceEdgeBandPerMeter,
+      totalPrice: Math.round(costEdgeBand * 100) / 100,
+    });
+  }
 
   const description = `Orçamento gerado localmente para ${data.project.projectName} - ${data.project.clientName}.`;
 
@@ -198,6 +226,7 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
   observations.push(`Área total 15mm: ${totalArea15.toFixed(2)} m², 6mm: ${totalArea6.toFixed(2)} m².`);
   observations.push(`Horas estimadas de produção: ${laborHours.toFixed(2)}h.`);
   observations.push(`Sheets estimados (15mm): ${totalSheets15}, (6mm): ${sheets6}.`);
+  observations.push(`Fita de borda estimada: ${Math.round(totalEdgeMeters * 100) / 100} m (+${wastePercent}% desperdício) = ${Math.round(totalEdgeMetersWithWaste * 100) / 100} m (R$ ${Math.round(costEdgeBand * 100) / 100}).`);
 
   return {
     totalCost: Math.round(totalCost * 100) / 100,

@@ -13,6 +13,8 @@ export const defaultSettings: AppSettings = {
   priceSlideHidden: 120,
   priceRail: 180,
   priceHandle: 25,
+  priceEdgeBandPerMeter: 4.5,
+  edgeBandWastePercent: 5,
   laborRate: 80,
   profitMargin: 30
 };

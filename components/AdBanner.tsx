@@ -14,10 +14,13 @@ const AdBanner: React.FC<AdBannerProps> = ({ position, adSlot, adTest = false })
     } catch (e) {
       // ignore errors in dev environment
     }
-  }, []);
+  }, [adSlot]);
 
-  const containerClass = position === 'sidebar' ? 'w-40' : 'w-full';
+  const containerClass = position === 'sidebar' ? 'w-56' : 'w-full';
   const insStyle: React.CSSProperties = { display: 'block' };
+
+  // Use default slot if not provided
+  const slotId = adSlot || '1950953442';
 
   return (
     <div className={`my-4 ${containerClass}`}>
@@ -25,7 +28,7 @@ const AdBanner: React.FC<AdBannerProps> = ({ position, adSlot, adTest = false })
         className="adsbygoogle"
         style={insStyle}
         data-ad-client="ca-pub-8819760043153934"
-        data-ad-slot={adSlot || 'REPLACE_WITH_AD_SLOT'}
+        data-ad-slot={slotId}
         data-ad-format="auto"
         data-full-width-responsive="true"
         {...(adTest ? { 'data-adtest': 'on' } : {})}

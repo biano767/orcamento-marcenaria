@@ -32,19 +32,44 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
     const shelvesArea = (mod.internals.shelves || 0) * (w * d);
 
     // Doors area (if any)
-    const doorsArea = (mod.hardware.doorCount || 0) * (w * h);
+    // For sliding doors: calculate actual door dimensions (width and height with deductions)
+    let doorsArea = 0;
+    if (mod.hardware.doorCount > 0 && mod.hardware.doorType === 'Correr (Trilhos)') {
+      // Sliding door: width = (module width / door count) + overlap
+      const doorWidth = (w / mod.hardware.doorCount) + (mmToM(settings.slidingDoorOverlapMm || 20));
+      // Sliding door height = module height - deduction (base + kit trilho)
+      const doorHeight = h - mmToM(settings.doorHeightDeductionMm || 65);
+      doorsArea = mod.hardware.doorCount * (doorWidth * Math.max(0, doorHeight));
+    } else {
+      // Hinged doors: use full module height and width
+      doorsArea = (mod.hardware.doorCount || 0) * (w * h);
+    }
 
     // Drawer fronts area estimate: use drawerSideHeight as height of front
     const drawerFrontHeight = mmToM(mod.internals.drawerSideHeight || 0);
     const drawerFrontsArea = (mod.internals.drawers || 0) * (w * drawerFrontHeight);
+    // Only count drawer edges/area as external if module explicitly marks drawer fronts as external
+    const drawerFrontsAreExternal = !!mod.internals.drawerFrontsExternal;
 
     // Assign most panels to 15mm, backs to 6mm
-    const area15 = sidesArea + topBottomArea + shelvesArea + doorsArea + drawerFrontsArea;
+    // By default drawer fronts are INTERNAL (not counted here); only add if explicitly marked as external
+    const area15 = sidesArea + topBottomArea + shelvesArea + doorsArea + (drawerFrontsAreExternal ? drawerFrontsArea : 0);
     const area6 = backArea;
 
-    // Consider doors and drawer fronts as "external" (colorExternal)
-    const externalArea = doorsArea + drawerFrontsArea;
-    const internalArea = Math.max(0, area15 - externalArea);
+    // Determine how many lateral sides are finished (visible) and should use external color
+    // Business rule:
+    // - visibleSides = 0 -> both laterals considered internal
+    // - visibleSides = 1 -> one lateral internal, one external
+    // - visibleSides = 2 -> both laterals external
+    const visibleSidesCount = Math.max(0, Math.min(mod.materials.visibleSides || 0, 2));
+    const externalSidesArea = visibleSidesCount * (h * d); // area of lateral faces that are external
+    const internalSidesArea = sidesArea - externalSidesArea;
+
+    // Consider doors, drawer fronts and external lateral faces as "external" (colorExternal)
+    // (externalArea computed below with drawerFronts conditional)
+    const externalArea = doorsArea + (drawerFrontsAreExternal ? drawerFrontsArea : 0) + externalSidesArea;
+    // Internal area is the remainder of area15 not counted as external, PLUS internal drawer fronts
+    const internalArea = Math.max(0, area15 - externalArea) + (drawerFrontsAreExternal ? 0 : drawerFrontsArea);
 
     totalArea15 += area15;
     totalArea15External += externalArea;
@@ -92,14 +117,72 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
     laborHours += (mod.internals.shoeShelves || 0) * 0.25;
   });
 
+  // Correct double-counting of shared vertical panels between adjacent modules.
+  // When two modules are placed side-by-side (wall-to-wall), the internal separating panel
+  // should be counted once, but earlier we counted each module's lateral panel separately (twice).
+  // We'll subtract the shared panel area from internal or external totals when both adjacent
+  // modules agree on the panel being internal or external (i.e., visibleSides === 0 or === 2).
+  for (let i = 0; i < data.modules.length - 1; i++) {
+    const left = data.modules[i];
+    const right = data.modules[i + 1];
+    const leftH = mmToM(left.dimensions.height);
+    const rightH = mmToM(right.dimensions.height);
+    const leftD = mmToM(left.dimensions.depth);
+    const rightD = mmToM(right.dimensions.depth);
+
+    // Use max of heights and depths for the shared panel estimate
+    const sharedHeight = Math.max(leftH, rightH);
+    const sharedDepth = Math.max(leftD, rightD);
+    const sharedArea = sharedHeight * sharedDepth;
+
+    const leftVisible = (left.materials.visibleSides || 0);
+    const rightVisible = (right.materials.visibleSides || 0);
+
+    if (leftVisible === 0 && rightVisible === 0) {
+      // both consider the interface internal -> subtract from internal area
+      totalArea15Internal = Math.max(0, totalArea15Internal - sharedArea);
+      totalArea15 = Math.max(0, totalArea15 - sharedArea);
+    } else if (leftVisible === 2 && rightVisible === 2) {
+      // both consider the interface external (rare) -> subtract from external area
+      totalArea15External = Math.max(0, totalArea15External - sharedArea);
+      totalArea15 = Math.max(0, totalArea15 - sharedArea);
+    }
+    // if mixed visibility (1 vs 0/2 or 1 vs 1) we avoid changing because we can't reliably
+    // decide which side should be external without side-specific flags.
+  }
+
   // Calculate sheets needed
   const sheetArea = settings.sheetArea || 2.8; // default to 2.8m2 if not provided
-  // Determine sheets separately for external (color/white) and internal (color/white)
-  // Decide which price to use based on module-level color values aggregated conservatively:
-  // We'll assume external faces use colorExternal price, and internal faces use colorInternal price.
+  const sheetWidthMm = settings.sheetWidthMm || 1850; // mm - physical sheet width for cutting optimization
+  const sheetWidthM = sheetWidthMm / 1000;
 
-  // Sheets needed per area type
-  const sheets15External = Math.max(0, Math.ceil(totalArea15External / sheetArea));
+  // For sliding doors, consider cutting constraint: doors are cut from sheets widthwise
+  // Count how many doors fit in one sheet based on width, not just area
+  let sheets15ExternalDoors = 0;
+  if (totalRails > 0) {
+    // Calculate actual door width in mm
+    const w_mm = data.modules[0]?.dimensions.width || 2750;
+    const doorWidthMm = (w_mm / totalRails) + (settings.slidingDoorOverlapMm || 20);
+    // How many doors fit in one sheet width?
+    const doorsPerSheet = Math.floor(sheetWidthMm / doorWidthMm);
+    // Sheets needed for all doors (considering cutting constraint)
+    sheets15ExternalDoors = Math.ceil(totalRails / Math.max(1, doorsPerSheet));
+  }
+
+  // Remaining external area (non-doors) use area-based calculation
+  const externalAreaNonDoors = totalArea15External - (totalRails > 0 ? 
+    (data.modules.reduce((sum, mod) => {
+      if (mod.hardware.doorType === 'Correr (Trilhos)') {
+        const doorHeight = mmToM(mod.dimensions.height) - mmToM(settings.doorHeightDeductionMm || 65);
+        const doorWidth = (mmToM(mod.dimensions.width) / mod.hardware.doorCount) + mmToM(settings.slidingDoorOverlapMm || 20);
+        return sum + (mod.hardware.doorCount * doorWidth * Math.max(0, doorHeight));
+      }
+      return sum + (mod.hardware.doorCount * mmToM(mod.dimensions.width) * mmToM(mod.dimensions.height));
+    }, 0)) : 0);
+
+  const sheets15ExternalNonDoors = Math.max(0, Math.ceil(externalAreaNonDoors / sheetArea));
+  const sheets15External = sheets15ExternalDoors + sheets15ExternalNonDoors;
+  
   const sheets15Internal = Math.max(0, Math.ceil(totalArea15Internal / sheetArea));
   const sheets6 = Math.max(0, Math.ceil(totalArea6 / sheetArea));
 
@@ -115,7 +198,10 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
   const costHinges = totalHinges * settings.priceHinge;
   const costSlidesTel = totalSlidesTel * settings.priceSlide;
   const costSlidesHidden = totalSlidesHidden * settings.priceSlideHidden;
-  const costRails = totalRails * settings.priceRail;
+  const costRailsKit = totalRails * (settings.priceRail || 0);
+  const costRailsTop = totalRails * (settings.priceRailTop || 0);
+  const costRailsBottom = totalRails * (settings.priceRailBottom || 0);
+  const costRails = costRailsKit + costRailsTop + costRailsBottom;
   const costHandles = totalHandles * settings.priceHandle;
   // Apply waste percentage to edge band meters
   const wastePercent = settings.edgeBandWastePercent || 0;
@@ -192,13 +278,31 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
       totalPrice: costSlidesHidden,
     });
   }
-  if (totalRails > 0) {
+  if ((settings.priceRail || 0) > 0 && totalRails > 0) {
     materialList.push({
-      name: 'Sistema de Correr',
+      name: 'Sistema Porta de Correr (kit)',
       quantity: totalRails,
       unit: 'un',
       unitPrice: settings.priceRail,
-      totalPrice: costRails,
+      totalPrice: costRailsKit,
+    });
+  }
+  if ((settings.priceRailTop || 0) > 0 && totalRails > 0) {
+    materialList.push({
+      name: 'Trilho Superior',
+      quantity: totalRails,
+      unit: 'un',
+      unitPrice: settings.priceRailTop,
+      totalPrice: costRailsTop,
+    });
+  }
+  if ((settings.priceRailBottom || 0) > 0 && totalRails > 0) {
+    materialList.push({
+      name: 'Trilho Inferior',
+      quantity: totalRails,
+      unit: 'un',
+      unitPrice: settings.priceRailBottom,
+      totalPrice: costRailsBottom,
     });
   }
   if (totalHandles > 0) {

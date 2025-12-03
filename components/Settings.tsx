@@ -87,6 +87,14 @@ const SettingsView: React.FC<SettingsProps> = ({ onSave }) => {
             <input type="number" name="priceRail" value={settings.priceRail} onChange={handleChange} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
           </div>
           <div>
+            <label className="block text-sm text-gray-600 mb-1">Trilho Superior (R$/un)</label>
+            <input type="number" name="priceRailTop" value={settings.priceRailTop} onChange={handleChange} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Trilho Inferior (R$/un)</label>
+            <input type="number" name="priceRailBottom" value={settings.priceRailBottom} onChange={handleChange} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+          </div>
+          <div>
             <label className="block text-sm text-gray-600 mb-1">Cabideiro (Metro Linear) - Est.</label>
             <input type="number" defaultValue={45} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
           </div>
@@ -103,6 +111,29 @@ const SettingsView: React.FC<SettingsProps> = ({ onSave }) => {
           <div>
             <label className="block text-sm text-gray-600 mb-1">Desperdício fita (%)</label>
             <input type="number" name="edgeBandWastePercent" value={settings.edgeBandWastePercent} onChange={handleChange} className="w-full p-3 border rounded-lg bg-white focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+          </div>
+
+          {/* Doors Section */}
+          <div className="col-span-full mt-4">
+             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Portas de Correr</h3>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Dedução de Altura (mm)</label>
+            <input type="number" name="doorHeightDeductionMm" value={settings.doorHeightDeductionMm} onChange={handleChange} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+            <p className="text-xs text-gray-500 mt-1">Base/teto + kit trilho (ex: 30+35=65mm)</p>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Transpasse entre Portas (mm)</label>
+            <input type="number" name="slidingDoorOverlapMm" value={settings.slidingDoorOverlapMm} onChange={handleChange} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+            <p className="text-xs text-gray-500 mt-1">Sobreposição entre as portas de correr</p>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Largura da Chapa (mm)</label>
+            <input type="number" name="sheetWidthMm" value={settings.sheetWidthMm} onChange={handleChange} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+            <p className="text-xs text-gray-500 mt-1">Largura física da chapa MDF para otimização de corte</p>
           </div>
 
           {/* Service Section */}

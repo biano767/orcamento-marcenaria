@@ -1,6 +1,7 @@
 import React from 'react';
 import { QuoteData, AppView } from '../types';
 import { FileText, Calculator, PenTool, Trash2, Plus } from 'lucide-react';
+import AdBanner from './AdBanner';
 
 interface DashboardProps {
   projects: QuoteData[];
@@ -15,6 +16,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, onNewProject, onEditPro
 
   return (
     <div className="space-y-8 animate-fade-in">
+      <AdBanner position="top" />
       
       {/* Header */}
       <div className="flex justify-between items-center">

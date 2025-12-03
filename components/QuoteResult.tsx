@@ -1,6 +1,7 @@
 import React from 'react';
 import { QuoteResult, QuoteData } from '../types';
 import { FileText, Hammer, RefreshCcw } from 'lucide-react';
+import AdBanner from './AdBanner';
 
 interface QuoteResultProps {
   result: QuoteResult;
@@ -23,6 +24,8 @@ const QuoteResultView: React.FC<QuoteResultProps> = ({ result, projectData, onGe
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">
+      <AdBanner position="top" />
+      
       {/* Header Info */}
       <div className="flex justify-between items-start">
         <div>
@@ -190,6 +193,8 @@ const QuoteResultView: React.FC<QuoteResultProps> = ({ result, projectData, onGe
          Orçamento válido por 15 dias. Medidas devem ser conferidas no local antes da produção.
          <br/>OrçaMDF © 2025
       </div>
+
+      <AdBanner position="bottom" />
     </div>
   );
 };

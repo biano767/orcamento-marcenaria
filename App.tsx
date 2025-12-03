@@ -4,7 +4,6 @@ import Dashboard from './components/Dashboard';
 import QuoteWizard from './components/QuoteForm';
 import QuoteResultView from './components/QuoteResult';
 import SettingsView from './components/Settings';
-import AdBanner from './components/AdBanner';
 import { AppView, QuoteData, QuoteResult, ModuleDefinition } from './types';
 import { saveProject, loadProjects, deleteProject, clearStorage, loadSettings } from './services/storageService';
 import { generateLocalQuote } from './services/localQuoteService';
@@ -171,15 +170,12 @@ function App() {
         
         <div className="max-w-6xl mx-auto">
           {view === AppView.DASHBOARD && (
-             <>
-               <AdBanner position="top" />
-               <Dashboard 
-                 projects={projects}
-                 onNewProject={handleNewProject}
-                 onEditProject={handleEditProject}
-                 onDeleteProject={handleDeleteProject}
-               />
-             </>
+             <Dashboard 
+               projects={projects}
+               onNewProject={handleNewProject}
+               onEditProject={handleEditProject}
+               onDeleteProject={handleDeleteProject}
+             />
           )}
 
           {view === AppView.SETTINGS && (

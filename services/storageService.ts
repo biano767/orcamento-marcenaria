@@ -12,11 +12,16 @@ export const defaultSettings: AppSettings = {
   priceSlide: 40,
   priceSlideHidden: 120,
   priceRail: 180,
+  priceRailTop: 60,
+  priceRailBottom: 50,
   priceHandle: 25,
   priceEdgeBandPerMeter: 4.5,
   edgeBandWastePercent: 5,
   laborRate: 80,
-  profitMargin: 30
+  profitMargin: 30,
+  doorHeightDeductionMm: 65, // 30mm base/teto + 35mm kit trilho
+  slidingDoorOverlapMm: 20, // transpasse entre portas
+  sheetWidthMm: 1850, // largura padrão da chapa MDF
 };
 
 export const saveProject = (project: QuoteData) => {

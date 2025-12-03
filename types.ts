@@ -26,11 +26,16 @@ export interface AppSettings {
   priceSlide: number;
   priceSlideHidden: number; // Corrediça oculta
   priceRail: number; // Sistema porta de correr
+  priceRailTop: number; // Trilho superior (R$/un)
+  priceRailBottom: number; // Trilho inferior (R$/un)
   priceHandle: number; // Puxador
   laborRate: number;
   priceEdgeBandPerMeter: number; // R$/metro da fita de borda
   edgeBandWastePercent: number; // percentual de desperdício aplicado à fita de borda
   profitMargin: number;
+  doorHeightDeductionMm: number; // mm to subtract from module height for sliding doors (base + kit trilho)
+  slidingDoorOverlapMm: number; // mm added for overlap between sliding doors
+  sheetWidthMm: number; // mm - width of MDF sheet for cutting optimization (e.g., 1850mm)
 }
 
 export interface ProjectDetails {
@@ -62,6 +67,7 @@ export interface ModuleInternals {
   drawers: number;
   drawerSideHeight: number; 
   drawerSlideType: 'Telescópica' | 'Oculta';
+  drawerFrontsExternal?: boolean; // se true, frentes de gaveta usam acabamento externo (color)
   shoeShelves: number;
   clothesRails: number;
 }

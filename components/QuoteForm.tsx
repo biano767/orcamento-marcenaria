@@ -409,6 +409,26 @@ const QuoteWizard: React.FC<QuoteWizardProps> = ({ initialData, onSubmit, onCanc
                      </div>
                    ))}
                  </div>
+
+                 {/* Checkbox: Drawer Fronts External */}
+                 {(activeModule.internals.drawers || 0) > 0 && (
+                   <div className="mt-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                     <label className="flex items-center gap-3 cursor-pointer">
+                       <input 
+                         type="checkbox" 
+                         checked={activeModule.internals.drawerFrontsExternal || false}
+                         onChange={(e) => updateModuleField('internals', 'drawerFrontsExternal', e.target.checked)}
+                         className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                       />
+                       <span className="text-sm font-semibold text-blue-900">
+                         Frentes de gaveta externas (cor do MDF externo)
+                       </span>
+                     </label>
+                     <p className="text-xs text-blue-700 mt-2 ml-8">
+                       Se desmarcado: gavetas com acabamento interno (cor do MDF interno)
+                     </p>
+                   </div>
+                 )}
                </div>
              )}
 

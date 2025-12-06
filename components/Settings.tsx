@@ -87,20 +87,29 @@ const SettingsView: React.FC<SettingsProps> = ({ onSave }) => {
             <input type="number" name="priceRail" value={settings.priceRail} onChange={handleChange} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Trilho Superior (R$/un)</label>
+            <label className="block text-sm text-gray-600 mb-1">Trilho Superior (R$/m)</label>
             <input type="number" name="priceRailTop" value={settings.priceRailTop} onChange={handleChange} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+            <p className="text-xs text-gray-500 mt-1">Valor por metro linear</p>
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Trilho Inferior (R$/un)</label>
+            <label className="block text-sm text-gray-600 mb-1">Trilho Inferior (R$/m)</label>
             <input type="number" name="priceRailBottom" value={settings.priceRailBottom} onChange={handleChange} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+            <p className="text-xs text-gray-500 mt-1">Valor por metro linear</p>
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">Cabideiro (Metro Linear) - Est.</label>
             <input type="number" defaultValue={45} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
           </div>
            <div>
-            <label className="block text-sm text-gray-600 mb-1">Puxador (Unidade)</label>
+            <label className="block text-sm text-gray-600 mb-1">Puxador (R$/m)</label>
             <input type="number" name="priceHandle" value={settings.priceHandle} onChange={handleChange} className="w-full p-3 border rounded-lg bg-white focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+            <p className="text-xs text-gray-500 mt-1">Valor por metro linear (portas e gavetas externas)</p>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Parafusos Montagem Geral (R$/un)</label>
+            <input type="number" name="priceAssemblyScrew" value={settings.priceAssemblyScrew} onChange={handleChange} className="w-full p-3 border rounded-lg bg-white focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+            <p className="text-xs text-gray-500 mt-1">Valor médio para montagem total do móvel</p>
           </div>
 
           <div>
@@ -134,6 +143,39 @@ const SettingsView: React.FC<SettingsProps> = ({ onSave }) => {
             <label className="block text-sm text-gray-600 mb-1">Largura da Chapa (mm)</label>
             <input type="number" name="sheetWidthMm" value={settings.sheetWidthMm} onChange={handleChange} className="w-full p-3 border rounded-lg bg-blue-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
             <p className="text-xs text-gray-500 mt-1">Largura física da chapa MDF para otimização de corte</p>
+          </div>
+
+          {/* Shelf Mounting Devices Section */}
+          <div className="col-span-full mt-4">
+             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Dispositivos de Montagem de Prateleiras</h3>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Parafuso (R$/un)</label>
+            <input type="number" name="priceScrew" value={settings.priceScrew} onChange={handleChange} className="w-full p-3 border rounded-lg bg-green-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">VB (R$/un)</label>
+            <input type="number" name="priceVB" value={settings.priceVB} onChange={handleChange} className="w-full p-3 border rounded-lg bg-green-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Minifix (R$/un)</label>
+            <input type="number" name="priceMinifix" value={settings.priceMinifix} onChange={handleChange} className="w-full p-3 border rounded-lg bg-green-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Rafix (R$/un)</label>
+            <input type="number" name="priceRafix" value={settings.priceRafix} onChange={handleChange} className="w-full p-3 border rounded-lg bg-green-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+          </div>
+
+          {/* Shipping Section */}
+          <div className="col-span-full mt-4">
+             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Logística</h3>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Frete/Transporte (R$)</label>
+            <input type="number" name="shippingCost" value={settings.shippingCost} onChange={handleChange} className="w-full p-3 border rounded-lg bg-purple-50 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none" />
+            <p className="text-xs text-gray-500 mt-1">Valor fixo adicionado ao orçamento</p>
           </div>
 
           {/* Service Section */}

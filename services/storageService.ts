@@ -18,10 +18,16 @@ export const defaultSettings: AppSettings = {
   priceEdgeBandPerMeter: 4.5,
   edgeBandWastePercent: 5,
   laborRate: 80,
-  profitMargin: 30,
+  profitMargin: 50,
   doorHeightDeductionMm: 65, // 30mm base/teto + 35mm kit trilho
   slidingDoorOverlapMm: 20, // transpasse entre portas
   sheetWidthMm: 1850, // largura padrão da chapa MDF
+  shippingCost: 0, // frete - padrão zero, usuário configura
+  priceScrew: 0.50, // parafuso
+  priceVB: 1.50, // dispositivo VB
+  priceMinifix: 2.00, // dispositivo Minifix
+  priceRafix: 1.80, // dispositivo Rafix
+  priceAssemblyScrew: 0.30, // parafusos de montagem geral (estimado por móvel)
 };
 
 export const saveProject = (project: QuoteData) => {

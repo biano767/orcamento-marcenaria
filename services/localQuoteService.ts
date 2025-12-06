@@ -13,8 +13,17 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
   let totalSlidesTel = 0;
   let totalSlidesHidden = 0;
   let totalRails = 0;
-  let totalHandles = 0;
+  let totalRailTopMeters = 0; // meters of top rail for sliding doors
+  let totalRailBottomMeters = 0; // meters of bottom rail for sliding doors
+  let totalHandleMeters = 0; // meters of handle for doors and external drawer fronts
   let totalEdgeMeters = 0; // meters of edge banding
+  
+  // Shelf mounting devices
+  let totalShelves = 0;
+  let shelfDeviceType = 'Parafuso'; // default
+  
+  // Assembly screws - estimated by module
+  let totalAssemblyScrews = 0;
 
   let laborHours = 0;
 
@@ -30,6 +39,9 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
     const topBottomArea = 2 * (w * d);
     const backArea = w * h;
     const shelvesArea = (mod.internals.shelves || 0) * (w * d);
+    
+    // Drawer bottoms (6mm): width × depth for each drawer
+    const drawerBottomArea = (mod.internals.drawers || 0) * (w * d);
 
     // Doors area (if any)
     // For sliding doors: calculate actual door dimensions (width and height with deductions)
@@ -54,7 +66,7 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
     // Assign most panels to 15mm, backs to 6mm
     // By default drawer fronts are INTERNAL (not counted here); only add if explicitly marked as external
     const area15 = sidesArea + topBottomArea + shelvesArea + doorsArea + (drawerFrontsAreExternal ? drawerFrontsArea : 0);
-    const area6 = backArea;
+    const area6 = backArea + drawerBottomArea; // back + drawer bottoms (6mm)
 
     // Determine how many lateral sides are finished (visible) and should use external color
     // Business rule:
@@ -93,12 +105,20 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
       // estimate 2 hinges per door
       totalHinges += (mod.hardware.doorCount || 0) * 2;
     } else if (mod.hardware.doorType === 'Correr (Trilhos)') {
-      // each door uses one rail/system
-      totalRails += (mod.hardware.doorCount || 0);
+      // For sliding doors: rails are measured in meters, based on module width
+      // Top and bottom rails length = module width
+      totalRailTopMeters += w; // width of module = length of top rail
+      totalRailBottomMeters += w; // width of module = length of bottom rail
     }
 
-    // Handles for doors and drawers
-    totalHandles += (mod.hardware.doorCount || 0) + (mod.internals.drawers || 0);
+    // Handles/Puxadores - measured in meters, only on external faces
+    // Doors: always external
+    totalHandleMeters += (mod.hardware.doorCount || 0) * w; // width of each door = handle length
+    
+    // Drawer fronts: only if marked as external
+    if (drawerFrontsAreExternal && (mod.internals.drawers || 0) > 0) {
+      totalHandleMeters += (mod.internals.drawers || 0) * w; // width per drawer front = handle length
+    }
 
     // Slides for drawers
     const drawerSlideType = mod.internals.drawerSlideType || 'Telescópica';
@@ -107,6 +127,20 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
     } else {
       totalSlidesTel += (mod.internals.drawers || 0);
     }
+
+    // Shelf mounting devices
+    totalShelves += (mod.internals.shelves || 0);
+    if (mod.internals.shelfMountDevice) {
+      shelfDeviceType = mod.internals.shelfMountDevice;
+    }
+
+    // Assembly screws - estimate: base per module + extra for complexity
+    // Estimate: 20 screws base + 5 per shelf + 3 per drawer + 2 per door
+    const estimatedScrewsPerModule = 20 + 
+      ((mod.internals.shelves || 0) * 5) + 
+      ((mod.internals.drawers || 0) * 3) + 
+      ((mod.hardware.doorCount || 0) * 2);
+    totalAssemblyScrews += estimatedScrewsPerModule;
 
     // Labor heuristics: base + per-feature
     laborHours += 2.0; // base per module
@@ -159,18 +193,22 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
   // For sliding doors, consider cutting constraint: doors are cut from sheets widthwise
   // Count how many doors fit in one sheet based on width, not just area
   let sheets15ExternalDoors = 0;
-  if (totalRails > 0) {
+  const slidingDoorsCount = data.modules.reduce((sum, mod) => {
+    return sum + (mod.hardware.doorType === 'Correr (Trilhos)' ? (mod.hardware.doorCount || 0) : 0);
+  }, 0);
+  
+  if (slidingDoorsCount > 0) {
     // Calculate actual door width in mm
-    const w_mm = data.modules[0]?.dimensions.width || 2750;
-    const doorWidthMm = (w_mm / totalRails) + (settings.slidingDoorOverlapMm || 20);
+    const w_mm = data.modules.find(m => m.hardware.doorType === 'Correr (Trilhos)')?.dimensions.width || 2750;
+    const doorWidthMm = (w_mm / slidingDoorsCount) + (settings.slidingDoorOverlapMm || 20);
     // How many doors fit in one sheet width?
     const doorsPerSheet = Math.floor(sheetWidthMm / doorWidthMm);
     // Sheets needed for all doors (considering cutting constraint)
-    sheets15ExternalDoors = Math.ceil(totalRails / Math.max(1, doorsPerSheet));
+    sheets15ExternalDoors = Math.ceil(slidingDoorsCount / Math.max(1, doorsPerSheet));
   }
 
   // Remaining external area (non-doors) use area-based calculation
-  const externalAreaNonDoors = totalArea15External - (totalRails > 0 ? 
+  const externalAreaNonDoors = totalArea15External - (slidingDoorsCount > 0 ? 
     (data.modules.reduce((sum, mod) => {
       if (mod.hardware.doorType === 'Correr (Trilhos)') {
         const doorHeight = mmToM(mod.dimensions.height) - mmToM(settings.doorHeightDeductionMm || 65);
@@ -198,23 +236,55 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
   const costHinges = totalHinges * settings.priceHinge;
   const costSlidesTel = totalSlidesTel * settings.priceSlide;
   const costSlidesHidden = totalSlidesHidden * settings.priceSlideHidden;
-  const costRailsKit = totalRails * (settings.priceRail || 0);
-  const costRailsTop = totalRails * (settings.priceRailTop || 0);
-  const costRailsBottom = totalRails * (settings.priceRailBottom || 0);
-  const costRails = costRailsKit + costRailsTop + costRailsBottom;
-  const costHandles = totalHandles * settings.priceHandle;
+  // Rails are now measured in meters
+  const costRailsKit = 0; // Kit is no longer used (now using individual top/bottom rails)
+  const costRailsTop = totalRailTopMeters * (settings.priceRailTop || 0);
+  const costRailsBottom = totalRailBottomMeters * (settings.priceRailBottom || 0);
+  const costRails = costRailsTop + costRailsBottom;
+  
+  // Handles/Puxadores are now measured in meters (only on external faces)
+  const costHandles = totalHandleMeters * (settings.priceHandle || 0);
+  
+  // Assembly screws cost
+  const costAssemblyScrews = totalAssemblyScrews * (settings.priceAssemblyScrew || 0);
+  
   // Apply waste percentage to edge band meters
   const wastePercent = settings.edgeBandWastePercent || 0;
   const totalEdgeMetersWithWaste = totalEdgeMeters * (1 + (wastePercent / 100));
   const costEdgeBand = totalEdgeMetersWithWaste * (settings.priceEdgeBandPerMeter || 0);
 
-  const materialCost = costSheets15 + costSheets6 + costHinges + costSlidesTel + costSlidesHidden + costRails + costHandles;
-  // include edge band cost
-  const materialCostWithEdge = materialCost + costEdgeBand;
+  // Shelf mounting devices - count pairs (4 devices per shelf: 2 each side)
+  let costShelfDevices = 0;
+  let shelfDevicePrice = 0;
+  if (totalShelves > 0) {
+    const shelfDevicesNeeded = totalShelves * 4; // 4 devices per shelf (2 each side)
+    switch (shelfDeviceType) {
+      case 'VB':
+        shelfDevicePrice = settings.priceVB || 1.50;
+        break;
+      case 'Minifix':
+        shelfDevicePrice = settings.priceMinifix || 2.00;
+        break;
+      case 'Rafix':
+        shelfDevicePrice = settings.priceRafix || 1.80;
+        break;
+      case 'Parafuso':
+      default:
+        shelfDevicePrice = settings.priceScrew || 0.50;
+    }
+    costShelfDevices = shelfDevicesNeeded * shelfDevicePrice;
+  }
+
+  // Shipping cost
+  const shippingCost = settings.shippingCost || 0;
+
+  const materialCost = costSheets15 + costSheets6 + costHinges + costSlidesTel + costSlidesHidden + costRails + costHandles + costAssemblyScrews + costShelfDevices + costEdgeBand;
+  // include shipping cost
+  const materialCostWithShipping = materialCost + shippingCost;
 
   const laborCost = laborHours * settings.laborRate;
 
-  const totalCost = materialCostWithEdge + laborCost;
+  const totalCost = materialCostWithShipping + laborCost;
   const suggestedPrice = Math.round((totalCost * (1 + (settings.profitMargin / 100))) * 100) / 100;
 
   // Production time (days) estimate (8h/day)
@@ -278,40 +348,49 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
       totalPrice: costSlidesHidden,
     });
   }
-  if ((settings.priceRail || 0) > 0 && totalRails > 0) {
+  if ((settings.priceRail || 0) > 0 && totalRailTopMeters > 0) {
     materialList.push({
       name: 'Sistema Porta de Correr (kit)',
-      quantity: totalRails,
+      quantity: data.modules.filter(m => m.hardware.doorType === 'Correr (Trilhos)').length,
       unit: 'un',
       unitPrice: settings.priceRail,
-      totalPrice: costRailsKit,
+      totalPrice: data.modules.filter(m => m.hardware.doorType === 'Correr (Trilhos)').length * (settings.priceRail || 0),
     });
   }
-  if ((settings.priceRailTop || 0) > 0 && totalRails > 0) {
+  if ((settings.priceRailTop || 0) > 0 && totalRailTopMeters > 0) {
     materialList.push({
       name: 'Trilho Superior',
-      quantity: totalRails,
-      unit: 'un',
+      quantity: Math.round(totalRailTopMeters * 100) / 100,
+      unit: 'm',
       unitPrice: settings.priceRailTop,
-      totalPrice: costRailsTop,
+      totalPrice: Math.round(costRailsTop * 100) / 100,
     });
   }
-  if ((settings.priceRailBottom || 0) > 0 && totalRails > 0) {
+  if ((settings.priceRailBottom || 0) > 0 && totalRailBottomMeters > 0) {
     materialList.push({
       name: 'Trilho Inferior',
-      quantity: totalRails,
-      unit: 'un',
+      quantity: Math.round(totalRailBottomMeters * 100) / 100,
+      unit: 'm',
       unitPrice: settings.priceRailBottom,
-      totalPrice: costRailsBottom,
+      totalPrice: Math.round(costRailsBottom * 100) / 100,
     });
   }
-  if (totalHandles > 0) {
+  if (totalHandleMeters > 0 && costHandles > 0) {
     materialList.push({
       name: 'Puxador',
-      quantity: totalHandles,
-      unit: 'un',
+      quantity: Math.round(totalHandleMeters * 100) / 100,
+      unit: 'm',
       unitPrice: settings.priceHandle,
-      totalPrice: costHandles,
+      totalPrice: Math.round(costHandles * 100) / 100,
+    });
+  }
+  if (totalAssemblyScrews > 0 && costAssemblyScrews > 0) {
+    materialList.push({
+      name: 'Parafusos Montagem Geral',
+      quantity: totalAssemblyScrews,
+      unit: 'un',
+      unitPrice: settings.priceAssemblyScrew,
+      totalPrice: costAssemblyScrews,
     });
   }
   if (totalEdgeMeters > 0) {
@@ -321,6 +400,32 @@ export const generateLocalQuote = (data: QuoteData, settings: AppSettings): Quot
       unit: 'm',
       unitPrice: settings.priceEdgeBandPerMeter,
       totalPrice: Math.round(costEdgeBand * 100) / 100,
+    });
+  }
+
+  if (totalShelves > 0 && costShelfDevices > 0) {
+    const deviceNames: { [key: string]: string } = {
+      'Parafuso': 'Parafusos',
+      'VB': 'Dispositivos VB',
+      'Minifix': 'Dispositivos Minifix',
+      'Rafix': 'Dispositivos Rafix',
+    };
+    materialList.push({
+      name: deviceNames[shelfDeviceType] || 'Dispositivos de Montagem',
+      quantity: totalShelves * 4, // 4 devices per shelf
+      unit: 'un',
+      unitPrice: shelfDevicePrice,
+      totalPrice: costShelfDevices,
+    });
+  }
+
+  if (shippingCost > 0) {
+    materialList.push({
+      name: 'Frete/Transporte',
+      quantity: 1,
+      unit: 'un',
+      unitPrice: shippingCost,
+      totalPrice: shippingCost,
     });
   }
 

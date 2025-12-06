@@ -36,6 +36,12 @@ export interface AppSettings {
   doorHeightDeductionMm: number; // mm to subtract from module height for sliding doors (base + kit trilho)
   slidingDoorOverlapMm: number; // mm added for overlap between sliding doors
   sheetWidthMm: number; // mm - width of MDF sheet for cutting optimization (e.g., 1850mm)
+  shippingCost: number; // R$ - valor fixo de frete
+  priceScrew: number; // R$/un - parafuso comum
+  priceVB: number; // R$/un - dispositivo VB
+  priceMinifix: number; // R$/un - dispositivo Minifix
+  priceRafix: number; // R$/un - dispositivo Rafix
+  priceAssemblyScrew: number; // R$/un - parafusos de montagem geral do móvel
 }
 
 export interface ProjectDetails {
@@ -64,6 +70,7 @@ export interface ModuleMaterials {
 
 export interface ModuleInternals {
   shelves: number;
+  shelfMountDevice?: 'Parafuso' | 'VB' | 'Minifix' | 'Rafix'; // dispositivo de montagem das prateleiras
   drawers: number;
   drawerSideHeight: number; 
   drawerSlideType: 'Telescópica' | 'Oculta';

@@ -356,7 +356,7 @@ const QuoteWizard: React.FC<QuoteWizardProps> = ({ initialData, onSubmit, onCanc
                  
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                    {[
-                     { key: 'shelves', label: 'Prateleiras' },
+                     { key: 'shelves', label: 'Prateleiras', deviceSelector: true },
                      { key: 'drawers', label: 'Gavetas', sub: 'Altura Lateral (mm)', subKey: 'drawerSideHeight', typeSelector: true },
                      { key: 'shoeShelves', label: 'Sapateiras', sub: 'Fixa 60mm' },
                      { key: 'clothesRails', label: 'Cabideiros' }
@@ -378,6 +378,21 @@ const QuoteWizard: React.FC<QuoteWizardProps> = ({ initialData, onSubmit, onCanc
                             +
                           </button>
                         </div>
+                        {item.deviceSelector && (activeModule.internals as any)[item.key] > 0 && (
+                           <div className="mt-3 w-full">
+                              <label className="text-[10px] text-blue-400 block text-center mb-1">Dispositivo Montagem</label>
+                              <select 
+                                 value={activeModule.internals.shelfMountDevice || 'Parafuso'}
+                                 onChange={(e) => updateModuleField('internals', 'shelfMountDevice', e.target.value)}
+                                 className="w-full text-xs p-1 border border-gray-300 rounded bg-white text-gray-900 focus:ring-1 focus:ring-blue-300 outline-none"
+                              >
+                                <option value="Parafuso">Parafuso</option>
+                                <option value="VB">VB</option>
+                                <option value="Minifix">Minifix</option>
+                                <option value="Rafix">Rafix</option>
+                              </select>
+                           </div>
+                        )}
                         {item.typeSelector && (activeModule.internals as any)[item.key] > 0 && (
                            <div className="mt-3 w-full">
                               <label className="text-[10px] text-blue-400 block text-center mb-1">Tipo de Corrediça</label>
